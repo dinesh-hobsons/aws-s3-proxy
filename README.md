@@ -1,18 +1,9 @@
-# Reverse proxy for AWS S3 w/ basic authentication
-
-![circleci status](https://circleci.com/gh/pottava/aws-s3-proxy.svg?style=shield&circle-token=9bc17d02e4513df42196523a1791465e65d8ab01) 
-
-Supported tags and respective `Dockerfile` links:  
-・latest ([prod/Dockerfile](https://github.com/pottava/aws-s3-proxy/blob/master/prod/Dockerfile))
+# Reverse proxy for AWS S3 
 
 ## Description
 
 This is a reverse proxy for AWS S3, which is able to provide basic authentication as well.  
 You don't need to configure a Bucket for `Website Hosting`.  
-
-http://this-proxy.com/access/ -> s3://backet/access/index.html
-
-([日本語はこちら](https://github.com/pottava/aws-s3-proxy/blob/master/README-ja.md))
 
 
 ## Usage

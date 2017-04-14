@@ -26,8 +26,6 @@ type config struct {
 	s3KeyPrefix      string // AWS_S3_KEY_PREFIX
 	httpCacheControl string // HTTP_CACHE_CONTROL (max-age=86400, no-cache ...)
 	httpExpires      string // HTTP_EXPIRES (Thu, 01 Dec 1994 16:00:00 GMT ...)
-	basicAuthUser    string // BASIC_AUTH_USER
-	basicAuthPass    string // BASIC_AUTH_PASS
 	port             string // APP_PORT
 	accessLog        bool   // ACCESS_LOG
 	sslCert          string // SSL_CERT_PATH
@@ -88,7 +86,7 @@ func configFromEnvironmentVariables() *config {
 	}
 	port := os.Getenv("APP_PORT")
 	if len(port) == 0 {
-		port = "80"
+		port = "8080"
 	}
 	accessLog := false
 	if b, err := strconv.ParseBool(os.Getenv("ACCESS_LOG")); err == nil {
@@ -108,8 +106,6 @@ func configFromEnvironmentVariables() *config {
 		s3KeyPrefix:      os.Getenv("AWS_S3_KEY_PREFIX"),
 		httpCacheControl: os.Getenv("HTTP_CACHE_CONTROL"),
 		httpExpires:      os.Getenv("HTTP_EXPIRES"),
-		basicAuthUser:    os.Getenv("BASIC_AUTH_USER"),
-		basicAuthPass:    os.Getenv("BASIC_AUTH_PASS"),
 		port:             port,
 		accessLog:        accessLog,
 		sslCert:          os.Getenv("SSL_CERT_PATH"),
@@ -128,10 +124,6 @@ func configFromEnvironmentVariables() *config {
 	// TLS pem files
 	if (len(conf.sslCert) > 0) && (len(conf.sslKey) > 0) {
 		log.Print("[config] TLS enabled.")
-	}
-	// Basic authentication
-	if (len(conf.basicAuthUser) > 0) && (len(conf.basicAuthPass) > 0) {
-		log.Printf("[config] Basic authentication: %s", conf.basicAuthUser)
 	}
 	// CORS
 	if (len(conf.corsAllowOrigin) > 0) && (conf.corsMaxAge > 0) {
@@ -166,11 +158,6 @@ func wrapper(f func(w http.ResponseWriter, r *http.Request)) http.Handler {
 			w.Header().Set("Access-Control-Allow-Headers", c.corsAllowHeaders)
 			w.Header().Set("Access-Control-Max-Age", strconv.FormatInt(c.corsMaxAge, 10))
 		}
-		if (len(c.basicAuthUser) > 0) && (len(c.basicAuthPass) > 0) && !auth(r) {
-			w.Header().Set("WWW-Authenticate", `Basic realm="REALM"`)
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
 		proc := time.Now()
 		addr := r.RemoteAddr
 		if ip, found := header(r, "X-Forwarded-For"); found {
@@ -204,14 +191,6 @@ func wrapper(f func(w http.ResponseWriter, r *http.Request)) http.Handler {
 				writer.status, r.Method, r.URL)
 		}
 	})
-}
-
-func auth(r *http.Request) bool {
-	if username, password, ok := r.BasicAuth(); ok {
-		return username == c.basicAuthUser &&
-			password == c.basicAuthPass
-	}
-	return false
 }
 
 func header(r *http.Request, key string) (string, bool) {
